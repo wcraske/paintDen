@@ -80,7 +80,6 @@ public class Server {
         public void run() {
             try {
                 // Get the username from the client
-                out.println("Enter your username:");
                 username = in.readLine();
                 out.println("Type Your Message");
 

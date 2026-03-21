@@ -11,12 +11,13 @@ class UserInterface implements ActionListener, Client.MessageListener {
     private String username = null;
     private DataBaseManager db;
 
+    private JFrame frame;
     private JTextArea chatArea;
     private JTextField messageField;
     private DrawingCanvas canvas;
 
     public UserInterface() {
-        JFrame frame = new JFrame("Chat App");
+        frame = new JFrame("ฅʕ՞•ﻌ•՞ʔฅ");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(900, 600);
         frame.setMinimumSize(new Dimension(700, 450));
@@ -102,11 +103,16 @@ class UserInterface implements ActionListener, Client.MessageListener {
 
         db = new DataBaseManager();
         username = db.getUsername();
-        if (username != null) {
+        if (username == null) {
+            chatArea.append("Enter your username: \n");
+        } else {
             usernameSet = true;
             client = new Client(this);
             client.sendMessage(username);
+            frame.setTitle("ฅʕ՞•ﻌ•՞ʔฅ");
         }
+
+        updateTitleBlink();
     }
 
     // ── Stub ─────────────────────────────────────────────────────────────────
@@ -114,6 +120,29 @@ class UserInterface implements ActionListener, Client.MessageListener {
     private void onSendDrawing() {
         BufferedImage image = canvas.getImage();
         // TODO: encode to PNG/Base64 and send via client
+    }
+
+    // ── Random title blink animation ─────────────────────────────────────────
+
+    private void updateTitleBlink() {
+        String blinking = "ฅʕ՞–ﻌ–՞ʔฅ";
+        String normal   = "ฅʕ՞•ﻌ•՞ʔฅ";
+
+        new Thread(() -> {
+            try {
+                while (true) {
+                    double rnd = Math.random();
+                    if (rnd < 0.01) {
+                        SwingUtilities.invokeLater(() -> frame.setTitle(blinking));
+                        Thread.sleep(150);
+                        SwingUtilities.invokeLater(() -> frame.setTitle(normal));
+                    }
+                    Thread.sleep(50);
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }).start();
     }
 
     // ── Text chat ────────────────────────────────────────────────────────────
@@ -189,7 +218,7 @@ class UserInterface implements ActionListener, Client.MessageListener {
             BufferedImage snap = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_INT_RGB);
             snap.createGraphics().drawImage(image, 0, 0, null);
             undoStack.push(snap);
-            if (undoStack.size() > 50) undoStack.pollLast(); // cap history
+            if (undoStack.size() > 50) undoStack.pollLast(); 
         }
 
         void undo() {
