@@ -14,6 +14,8 @@ import java.util.Scanner;
 public class Server {
     private static final int PORT = 62421;
     private static CopyOnWriteArrayList<ClientHandler> clients = new CopyOnWriteArrayList<>();
+    private static int imageTimer = 60;
+
 
     public static void main(String[] args) {
         try {
@@ -51,6 +53,7 @@ public class Server {
                 client.sendMessage(message);
             }
         }
+    
     }
 
 

@@ -3,6 +3,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.util.ArrayDeque;
+import java.util.Random;
 
 class UserInterface implements ActionListener, Client.MessageListener {
 
@@ -62,9 +63,7 @@ class UserInterface implements ActionListener, Client.MessageListener {
 
         JPanel leftPanel = new JPanel(new BorderLayout(0, 6));
         leftPanel.setPreferredSize(new Dimension(220, 0));
-        leftPanel.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createMatteBorder(0, 0, 0, 1, Color.LIGHT_GRAY),
-            BorderFactory.createEmptyBorder(8, 8, 8, 8)));
+        leftPanel.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
         leftPanel.add(palette, BorderLayout.NORTH);
         leftPanel.add(canvas, BorderLayout.CENTER);
         leftPanel.add(bottomLeft, BorderLayout.SOUTH);
@@ -83,9 +82,7 @@ class UserInterface implements ActionListener, Client.MessageListener {
         sendText.addActionListener(this);
 
         JPanel inputBar = new JPanel(new BorderLayout(6, 0));
-        inputBar.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createMatteBorder(1, 0, 0, 0, Color.LIGHT_GRAY),
-            BorderFactory.createEmptyBorder(6, 8, 6, 8)));
+        inputBar.setBorder(BorderFactory.createEmptyBorder(6, 8, 6, 8));
         inputBar.add(messageField, BorderLayout.CENTER);
         inputBar.add(sendText, BorderLayout.EAST);
 
@@ -96,7 +93,7 @@ class UserInterface implements ActionListener, Client.MessageListener {
         // ── Frame ────────────────────────────────────────────────────────────
         JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftPanel, rightPanel);
         split.setDividerLocation(220);
-        split.setDividerSize(1);
+        split.setDividerSize(0);
         split.setEnabled(false);
         frame.add(split);
         frame.setVisible(true);
@@ -122,20 +119,36 @@ class UserInterface implements ActionListener, Client.MessageListener {
         // TODO: encode to PNG/Base64 and send via client
     }
 
-    // ── Random title blink animation ─────────────────────────────────────────
+    //method to send a message that prompts user to send image
+    //update it so that x dynamically updates in the same line
+    public void sendDrawingPrompt(){
+        int seconds = 30;
+        chatArea.append("[SERVER]: Time to send an image! you have " + seconds + " seconds left! \n");    
+    }
+
+
+
 
     private void updateTitleBlink() {
         String blinking = "ฅʕ՞–ﻌ–՞ʔฅ";
         String normal   = "ฅʕ՞•ﻌ•՞ʔฅ";
-
         new Thread(() -> {
             try {
+                Random rand = new Random();
+                //make the range for max blinks from 70 - 140, code for this is rand.nextInt(71) + 70 
+                int maxBlinks = rand.nextInt(71) + 70;
+                int numBlinks = 0;
                 while (true) {
-                    double rnd = Math.random();
-                    if (rnd < 0.01) {
+                    if (Math.random() < 0.01) {
                         SwingUtilities.invokeLater(() -> frame.setTitle(blinking));
                         Thread.sleep(150);
                         SwingUtilities.invokeLater(() -> frame.setTitle(normal));
+                        numBlinks++;
+                        if (numBlinks >= maxBlinks) {
+                            sendDrawingPrompt();
+                            numBlinks = 0;
+                            maxBlinks = rand.nextInt(71) + 70;
+                        }
                     }
                     Thread.sleep(50);
                 }
@@ -179,6 +192,14 @@ class UserInterface implements ActionListener, Client.MessageListener {
     // ── Drawing canvas ───────────────────────────────────────────────────────
 
     static class DrawingCanvas extends JPanel {
+        // Reads the L&F panel background so the canvas blends in naturally
+        static final Color CANVAS_BG = UIManager.getColor("Panel.background") != null
+                ? UIManager.getColor("Panel.background")
+                : new Color(212, 208, 200); // Win95 gray fallback
+        static final Color BORDER_COLOR = UIManager.getColor("controlShadow") != null
+                ? UIManager.getColor("controlShadow")
+                : new Color(128, 128, 128);
+
         Color drawColor = Color.BLACK;
         int brushSize = 4;
         private BufferedImage image;
@@ -190,9 +211,9 @@ class UserInterface implements ActionListener, Client.MessageListener {
         private final ArrayDeque<BufferedImage> undoStack = new ArrayDeque<>();
 
         DrawingCanvas() {
-            setBackground(Color.WHITE);
+            setBackground(CANVAS_BG);
             setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
-            setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
+            setBorder(BorderFactory.createLineBorder(BORDER_COLOR, 2));
             MouseAdapter m = new MouseAdapter() {
                 public void mousePressed(MouseEvent e) {
                     saveUndo();
@@ -218,7 +239,7 @@ class UserInterface implements ActionListener, Client.MessageListener {
             BufferedImage snap = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_INT_RGB);
             snap.createGraphics().drawImage(image, 0, 0, null);
             undoStack.push(snap);
-            if (undoStack.size() > 50) undoStack.pollLast(); 
+            if (undoStack.size() > 50) undoStack.pollLast();
         }
 
         void undo() {
@@ -246,7 +267,7 @@ class UserInterface implements ActionListener, Client.MessageListener {
         void clear() {
             saveUndo();
             ensure();
-            g2.setColor(Color.WHITE);
+            g2.setColor(CANVAS_BG);
             g2.fillRect(0, 0, image.getWidth(), image.getHeight());
             repaint();
         }
@@ -258,7 +279,7 @@ class UserInterface implements ActionListener, Client.MessageListener {
                 BufferedImage n = new BufferedImage(Math.max(1, getWidth()), Math.max(1, getHeight()), BufferedImage.TYPE_INT_RGB);
                 Graphics2D ng = n.createGraphics();
                 ng.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                ng.setColor(Color.WHITE);
+                ng.setColor(CANVAS_BG);
                 ng.fillRect(0, 0, n.getWidth(), n.getHeight());
                 if (image != null) ng.drawImage(image, 0, 0, null);
                 ng.dispose();
@@ -277,7 +298,6 @@ class UserInterface implements ActionListener, Client.MessageListener {
                 Graphics2D g2d = (Graphics2D) g.create();
                 g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 int r = brushSize;
-                // filled preview when pressing, outline otherwise
                 if (pressing) {
                     g2d.setColor(new Color(drawColor.getRed(), drawColor.getGreen(), drawColor.getBlue(), 120));
                     g2d.fillOval(cursorX - r / 2, cursorY - r / 2, r, r);

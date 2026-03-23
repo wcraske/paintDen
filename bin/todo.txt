@@ -3,6 +3,8 @@
 - add send image properly
 -  figure out how to setup server from oracle free
 - figure out how to make apple compatible
+- figure out changing row columns to be displayed, and name colour, 
+- figure out font/theme
 - ascii bear add to main title somehow:
 ⠀⠀⠀⠀⠀⠀⠀⣤⠶⣤⣤⣤⡴⢦⡄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 ⠀⠀⠀⠀⠀⠀⠀⢷⠉⠀⠀⠀⠈⠁⢷⠖⠒⠲⠶⢤⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀
