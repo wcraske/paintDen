@@ -1,4 +1,5 @@
 import javax.swing.*;
+import javax.swing.text.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
@@ -13,7 +14,7 @@ class UserInterface implements ActionListener, Client.MessageListener {
     private DataBaseManager db;
 
     private JFrame frame;
-    private JTextArea chatArea;
+    private JTextPane chatArea;
     private JTextField messageField;
     private DrawingCanvas canvas;
 
@@ -24,7 +25,6 @@ class UserInterface implements ActionListener, Client.MessageListener {
         frame.setMinimumSize(new Dimension(700, 450));
         frame.setLocationRelativeTo(null);
 
-        // ── Left: drawing panel ──────────────────────────────────────────────
         canvas = new DrawingCanvas();
 
         JSlider brushSlider = new JSlider(1, 20, 4);
@@ -68,11 +68,8 @@ class UserInterface implements ActionListener, Client.MessageListener {
         leftPanel.add(canvas, BorderLayout.CENTER);
         leftPanel.add(bottomLeft, BorderLayout.SOUTH);
 
-        // ── Right: chat panel ────────────────────────────────────────────────
-        chatArea = new JTextArea();
+        chatArea = new JTextPane();
         chatArea.setEditable(false);
-        chatArea.setLineWrap(true);
-        chatArea.setWrapStyleWord(true);
         chatArea.setFont(new Font("SansSerif", Font.PLAIN, 13));
         chatArea.setMargin(new Insets(8, 8, 8, 8));
 
@@ -90,7 +87,6 @@ class UserInterface implements ActionListener, Client.MessageListener {
         rightPanel.add(new JScrollPane(chatArea), BorderLayout.CENTER);
         rightPanel.add(inputBar, BorderLayout.SOUTH);
 
-        // ── Frame ────────────────────────────────────────────────────────────
         JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftPanel, rightPanel);
         split.setDividerLocation(220);
         split.setDividerSize(0);
@@ -101,7 +97,7 @@ class UserInterface implements ActionListener, Client.MessageListener {
         db = new DataBaseManager();
         username = db.getUsername();
         if (username == null) {
-            chatArea.append("Enter your username: \n");
+            appendToChat("Enter your username: \n");
         } else {
             usernameSet = true;
             client = new Client(this);
@@ -112,22 +108,33 @@ class UserInterface implements ActionListener, Client.MessageListener {
         updateTitleBlink();
     }
 
-    // ── Stub ─────────────────────────────────────────────────────────────────
+    private void appendToChat(String text) {
+        try {
+            Document doc = chatArea.getDocument();
+            doc.insertString(doc.getLength(), text, null);
+        } catch (BadLocationException e) {
+            e.printStackTrace();
+        }
+    }
 
     private void onSendDrawing() {
         BufferedImage image = canvas.getImage();
-        // TODO: encode to PNG/Base64 and send via client
+        BufferedImage clearBGImage = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = clearBGImage.createGraphics();
+        g.drawImage(image, 0, 0, null);
+        g.dispose();
+        ImageIcon jframeImage = new ImageIcon(clearBGImage);
+        chatArea.insertIcon(jframeImage);
+        appendToChat("\n");
+
+
+
     }
 
-    //method to send a message that prompts user to send image
-    //update it so that x dynamically updates in the same line
-    public void sendDrawingPrompt(){
+    public void sendDrawingPrompt() {
         int seconds = 30;
-        chatArea.append("[SERVER]: Time to send an image! you have " + seconds + " seconds left! \n");    
+        appendToChat("[SERVER]: Time to send an image! you have " + seconds + " seconds left! \n");
     }
-
-
-
 
     private void updateTitleBlink() {
         String blinking = "ฅʕ՞–ﻌ–՞ʔฅ";
@@ -135,7 +142,6 @@ class UserInterface implements ActionListener, Client.MessageListener {
         new Thread(() -> {
             try {
                 Random rand = new Random();
-                //make the range for max blinks from 70 - 140, code for this is rand.nextInt(71) + 70 
                 int maxBlinks = rand.nextInt(71) + 70;
                 int numBlinks = 0;
                 while (true) {
@@ -158,13 +164,11 @@ class UserInterface implements ActionListener, Client.MessageListener {
         }).start();
     }
 
-    // ── Text chat ────────────────────────────────────────────────────────────
-
     private void sendMessage() {
         String msg = messageField.getText().trim();
         if (!msg.isEmpty()) {
             client.sendMessage(msg);
-            chatArea.append(username + ": " + msg + "\n");
+            appendToChat(username + ": " + msg + "\n");
             messageField.setText("");
         }
     }
@@ -182,20 +186,18 @@ class UserInterface implements ActionListener, Client.MessageListener {
     }
 
     @Override public void onMessageReceived(String message) {
-        SwingUtilities.invokeLater(() -> chatArea.append(message + "\n"));
+        SwingUtilities.invokeLater(() -> appendToChat(message + "\n"));
     }
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(UserInterface::new);
     }
 
-    // ── Drawing canvas ───────────────────────────────────────────────────────
 
     static class DrawingCanvas extends JPanel {
-        // Reads the L&F panel background so the canvas blends in naturally
         static final Color CANVAS_BG = UIManager.getColor("Panel.background") != null
                 ? UIManager.getColor("Panel.background")
-                : new Color(212, 208, 200); // Win95 gray fallback
+                : new Color(212, 208, 200);
         static final Color BORDER_COLOR = UIManager.getColor("controlShadow") != null
                 ? UIManager.getColor("controlShadow")
                 : new Color(128, 128, 128);
@@ -207,7 +209,6 @@ class UserInterface implements ActionListener, Client.MessageListener {
         private int lx, ly;
         private int cursorX = -1, cursorY = -1;
         private boolean pressing = false;
-        // Undo stack: snapshot before each stroke begins
         private final ArrayDeque<BufferedImage> undoStack = new ArrayDeque<>();
 
         DrawingCanvas() {
@@ -268,7 +269,9 @@ class UserInterface implements ActionListener, Client.MessageListener {
             saveUndo();
             ensure();
             g2.setColor(CANVAS_BG);
+            g2.setComposite(AlphaComposite.Clear);
             g2.fillRect(0, 0, image.getWidth(), image.getHeight());
+            g2.setComposite(AlphaComposite.SrcOver);
             repaint();
         }
 
@@ -276,11 +279,13 @@ class UserInterface implements ActionListener, Client.MessageListener {
 
         private void ensure() {
             if (image == null || image.getWidth() != getWidth() || image.getHeight() != getHeight()) {
-                BufferedImage n = new BufferedImage(Math.max(1, getWidth()), Math.max(1, getHeight()), BufferedImage.TYPE_INT_RGB);
+                BufferedImage n = new BufferedImage(Math.max(1, getWidth()), Math.max(1, getHeight()), BufferedImage.TYPE_INT_ARGB);
                 Graphics2D ng = n.createGraphics();
                 ng.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                ng.setColor(CANVAS_BG);
+                ng.setComposite(AlphaComposite.Clear);
                 ng.fillRect(0, 0, n.getWidth(), n.getHeight());
+                ng.setComposite(AlphaComposite.SrcOver);
+                
                 if (image != null) ng.drawImage(image, 0, 0, null);
                 ng.dispose();
                 if (g2 != null) g2.dispose();
@@ -293,7 +298,6 @@ class UserInterface implements ActionListener, Client.MessageListener {
         @Override protected void paintComponent(Graphics g) {
             super.paintComponent(g);
             if (image != null) g.drawImage(image, 0, 0, null);
-            // Draw brush preview circle
             if (cursorX >= 0) {
                 Graphics2D g2d = (Graphics2D) g.create();
                 g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);

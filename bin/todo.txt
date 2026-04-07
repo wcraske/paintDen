@@ -1,11 +1,12 @@
 -figure out how to package for apple
 - add notifcications for imge sending randomly after a few hours
-- add send image properly
 -  figure out how to setup server from oracle free
 - figure out how to make apple compatible
 - figure out changing row columns to be displayed, and name colour, 
 - figure out font/theme
 - ascii bear add to main title somehow:
+- add voip
+- crop image from top and bottom most painted pixel
 ⠀⠀⠀⠀⠀⠀⠀⣤⠶⣤⣤⣤⡴⢦⡄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 ⠀⠀⠀⠀⠀⠀⠀⢷⠉⠀⠀⠀⠈⠁⢷⠖⠒⠲⠶⢤⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 ⠀⠀⠀⠀⠀⠀⠀⢸⠀⠠⠀⠠⠀⢠⠀⢳⠀⠀⠀⠀⠉⢳⡄⠀⠀⠀⠀⠀⠀⠀
@@ -15,3 +16,7 @@
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⣷⠀⠉⢻⡀⠀⠀⣾⠤⠤⡄⠀⠀⢸⠁⠀⠀⠀⠀⠀⠀
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⣸⠄⠀⣼⡇⠀⢠⡇⢀⡼⣻⠀⢀⡟⠀⠀⠀⠀⠀⠀⠀
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠛⠒⠚⠙⠷⠶⠞⠉⠉⠀⠓⠒⠚⠁⠀⠀⠀⠀⠀
+
+
+to run, server first then ui
+

@@ -1,11 +1,4 @@
 
-//to implement:
-//implement sql table to remember users
-//implement gui using swing https://medium.com/@keeptoo/spicing-up-your-java-swingui-using-custom-look-and-feel-113501dd5920
-//add voip and photos like snapchat
-
-
-
 import java.io.*;
 import java.net.*;
 import java.util.concurrent.CopyOnWriteArrayList;
